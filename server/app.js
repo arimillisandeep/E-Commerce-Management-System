@@ -25,15 +25,6 @@ app.use(express.json()); // parse JSON bodies
 app.use(morgan('dev')); // request logging
 
 // ---- API routes ----
-// Root info route (the API lives under /api)
-app.get('/', (req, res) => {
-  res.json({
-    status: 'success',
-    message: 'E-Commerce API server is running.',
-    docs: 'Try GET /api/health or open the frontend at http://localhost:5173',
-  });
-});
-
 app.get('/api/health', (req, res) => {
   res.json({ status: 'success', message: 'E-Commerce API is running', timestamp: new Date() });
 });
@@ -49,6 +40,28 @@ app.use('/api/admin', adminRoutes);
 app.use('/api', (req, res) => {
   res.status(404).json({ status: 'error', message: 'Route not found.' });
 });
+
+// Serve the built React app in production (single-service deployment).
+// client/dist is created by `npm --prefix client run build`.
+const path = require('path');
+const fs = require('fs');
+const clientDist = path.join(__dirname, '..', 'client', 'dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  // SPA fallback: any non-API GET route serves index.html (React Router handles it)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+} else {
+  // Development mode (no build yet): show API info at the root
+  app.get('/', (req, res) => {
+    res.json({
+      status: 'success',
+      message: 'E-Commerce API server is running.',
+      docs: 'Build the client (npm run build) or use the Vite dev server at http://localhost:5173',
+    });
+  });
+}
 
 // Central error handler (last)
 app.use(errorHandler);

@@ -328,22 +328,51 @@ Auth (user/token) and cart state are genuinely global; Context avoids prop-drill
 
 ## Deployment Steps
 
-**Backend (e.g. Render / Railway / VPS)**
-1. Create a PostgreSQL database (Render, Supabase, Neon, or a VPS).
-2. Set environment variables (`DB_*`, `JWT_SECRET`, `CLIENT_URL`, `PORT`).
-3. Run `database/schema.sql` (and optionally `seed.sql`) against the DB.
-4. `npm --prefix server install --omit=dev` then `npm --prefix server start`.
+### Deploy to Render (recommended — single Web Service)
 
-**Frontend (e.g. Vercel / Netlify)**
-1. `cd client` → set `VITE_API_URL` to the deployed API URL.
-2. `npm install && npm run build`, deploy the `dist/` folder.
+The app is configured for one Render **Web Service** that serves both the API and the built frontend.
+
+1. Push the repo to GitHub (already done):
+   `https://github.com/arimillisandeep/E-Commerce-Management-System`
+2. On Render, click **New + → Web Service → Connect your GitHub repo**.
+3. Settings:
+   - **Runtime:** Node
+   - **Build command:** `yarn install && yarn build`
+     (or `npm install && npm run build`)
+   - **Start command:** `npm --prefix server start`
+4. Create a **Render PostgreSQL** database and link it to the service.
+   Render injects `DATABASE_URL` automatically — `server/config/db.js` uses it when present.
+5. Add environment variables in the Render dashboard:
+   - `JWT_SECRET` — a long random string
+   - `CLIENT_URL` — your Render service URL (e.g. `https://myapp.onrender.com`)
+   - `NODE_ENV=production`
+   - `PORT` is provided by Render automatically
+6. **Initialize the database once** (connect to the Render PG database with psql or the Render shell):
+   ```bash
+   psql "$DATABASE_URL" -f database/schema.sql
+   psql "$DATABASE_URL" -f database/seed.sql
+   ```
+   Or register users through the app UI (products come from the seed file).
+7. Deploy — the app and API are served from the same URL.
+
+### Alternative: two services (API + static frontend)
+
+- **Web Service (backend):** build `npm --prefix server install`, start `npm --prefix server start`, env `DATABASE_URL` or `DB_*`.
+- **Static Site (frontend):** build `npm --prefix client install && npm --prefix client run build`, publish dir `client/dist`, env `VITE_API_URL=https://your-api-url.onrender.com/api`.
+
+### Local production check
+
+```bash
+npm install            # installs server + client deps (postinstall)
+npm run build          # builds client into client/dist
+npm start              # Express serves the API + the built frontend on :5000
+```
 
 **Production checklist**
 - Generate a strong `JWT_SECRET` (32+ random chars).
 - Restrict `CLIENT_URL` to your real domain.
-- Use HTTPS everywhere.
+- Use HTTPS everywhere (Render provides it).
 - Set `NODE_ENV=production`.
-- Add a DB connection limit appropriate for your plan.
 
 ---
 

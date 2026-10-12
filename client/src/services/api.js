@@ -2,8 +2,13 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 // Reusable API client (Phase 14: single place for all backend calls).
+// - Dev: hits the Express server directly (Vite proxies /api as a fallback).
+// - Production build without VITE_API_URL: same-origin relative paths
+//   (Express serves both the API and the built frontend).
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL:
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD ? '' : 'http://localhost:5000/api'),
 });
 
 // Attach JWT to every request if present
