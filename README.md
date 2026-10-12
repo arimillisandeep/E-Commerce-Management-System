@@ -347,12 +347,13 @@ The app is configured for one Render **Web Service** that serves both the API an
    - `CLIENT_URL` — your Render service URL (e.g. `https://myapp.onrender.com`)
    - `NODE_ENV=production`
    - `PORT` is provided by Render automatically
-6. **Initialize the database once** (connect to the Render PG database with psql or the Render shell):
+6. **The database initializes automatically** on first start (tables are
+   created if missing and sample data is seeded only when the database is
+   empty). To initialize manually instead, run in the Render shell:
    ```bash
    psql "$DATABASE_URL" -f database/schema.sql
    psql "$DATABASE_URL" -f database/seed.sql
    ```
-   Or register users through the app UI (products come from the seed file).
 7. Deploy — the app and API are served from the same URL.
 
 ### Alternative: two services (API + static frontend)
